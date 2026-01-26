@@ -180,21 +180,45 @@ class ZohoCRM {
                 blueprintsCount: blueprints.length,
                 assignmentRulesCount: assignmentRules.length
             },
-
-            fields: fields.map(field => ({
-              apiName: field.api_name,
-              fieldLabel: field.field_label,
-              dataType: field.data_type,
-              mandatory: field.required || false,
-              readOnly: field.read_only || false,
-              customField: field.custom_field || false,
-              visible: field.visible || false,
-              length: field.length,
-              picklistValues: field.pick_list_values || null
-            })),
-            layouts: layouts.map(l => ({ name: l.name, id: l.id, status: l.status })),
-            blueprints: blueprints.map(b => ({ name: b.name, id: b.id, processInfo: b.process_info })),
-            assignmentRules: assignmentRules.map(r => ({ name: r.name, id: r.id }))
+            
+            // Unified list of all components with standard keys
+            allItems: [
+                // Fields
+                ...fields.map(field => ({
+                  "Category": "Field",
+                  "Field Name": field.field_label,
+                  "Type of Fields": field.data_type,
+                  "Value": field.default_value || field.api_name,
+                  "Accessible by": field.read_only ? "System (Read Only)" : "Read/Write"
+                })),
+                
+                // Layouts
+                ...layouts.map(l => ({ 
+                  "Category": "Layout",
+                  "Field Name": l.name,
+                  "Type of Fields": "Layout",
+                  "Value": l.id,
+                  "Accessible by": l.visible ? "Visible to Profiles" : "Hidden"
+                })),
+                
+                // Blueprints
+                ...blueprints.map(b => ({ 
+                  "Category": "Blueprint",
+                  "Field Name": b.name,
+                  "Type of Fields": "Blueprint",
+                  "Value": b.process_info ? b.process_info.field_value : b.id,
+                  "Accessible by": "Process Owners"
+                })),
+                
+                // Assignment Rules
+                ...assignmentRules.map(r => ({ 
+                  "Category": "Assignment Rule",
+                  "Field Name": r.name,
+                  "Type of Fields": "Assignment Rule",
+                  "Value": r.id,
+                  "Accessible by": "System"
+                }))
+            ]
           });
 
           console.log(`  ✓ Fields: ${fields.length}, Layouts: ${layouts.length}, Blueprints: ${blueprints.length}`);
@@ -229,11 +253,10 @@ async function main() {
         const users = await zoho.getUsers();
         console.log(`✓ Found ${users.length} active users`);
         usersSummary = users.map(u => ({ 
-            fullName: u.full_name, 
-            email: u.email, 
-            id: u.id, 
-            role: u.role?.name, 
-            profile: u.profile?.name 
+            "Field Name": u.full_name, 
+            "Type of Fields": "User", 
+            "Value": u.email,
+            "Accessible by": u.role?.name || "No Role"
         }));
     } catch(err) {
         console.log('⚠ Could not fetch users (Check scope ZohoCRM.users.READ)');
@@ -250,6 +273,37 @@ async function main() {
     const outputFile = 'zoho-metadata-full.json';
     fs.writeFileSync(outputFile, JSON.stringify(fullData, null, 2));
     console.log(`\n✓ Full data saved to: ${outputFile}`);
+
+    // ----------------------------------------
+    // CSV GENERATION
+    // ----------------------------------------
+    console.log('\nGenerating CSV file...');
+    
+    // CSV Helper to handle commas and quotes safely
+    const toCsv = (val) => {
+        if (val === null || val === undefined) return '""';
+        return `"${String(val).replace(/"/g, '""')}"`;
+    };
+
+    let csvContent = "Module,Category,Name,Type,Value/API Name,Access/Notes\n";
+
+    // 1. Add Users
+    usersSummary.forEach(user => {
+        csvContent += `${toCsv("System (Users)")},${toCsv("User")},${toCsv(user["Field Name"])},${toCsv("User")},${toCsv(user["Value"])},${toCsv(user["Accessible by"])}\n`;
+    });
+
+    // 2. Add Modules and their items
+    modulesWithFields.forEach(module => {
+        if (module.allItems) {
+            module.allItems.forEach(item => {
+                csvContent += `${toCsv(module.moduleLabel)},${toCsv(item["Category"])},${toCsv(item["Field Name"])},${toCsv(item["Type of Fields"])},${toCsv(item["Value"])},${toCsv(item["Accessible by"])}\n`;
+            });
+        }
+    });
+
+    const csvFile = 'zoho-metadata.csv';
+    fs.writeFileSync(csvFile, csvContent);
+    console.log(`✓ CSV saved to: ${csvFile}`);
 
     console.log('\n' + '='.repeat(60));
     console.log('RESULTS SUMMARY');
