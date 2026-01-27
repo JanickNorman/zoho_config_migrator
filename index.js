@@ -1,5 +1,6 @@
 require('dotenv').config();
 const axios = require('axios');
+const XLSX = require('xlsx');
 
 class ZohoCRM {
   constructor() {
@@ -150,7 +151,7 @@ class ZohoCRM {
   }
 
   // Get all modules with their fields
-  async getAllModulesWithFields() {
+  async getAllModulesWithFields(profileToRolesMap = {}) {
     try {
       const modules = await this.getAllModules();
       const modulesWithFields = [];
@@ -184,13 +185,33 @@ class ZohoCRM {
             // Unified list of all components with standard keys
             allItems: [
                 // Fields
-                ...fields.map(field => ({
-                  "Category": "Field",
-                  "Field Name": field.field_label,
-                  "Type of Fields": field.data_type,
-                  "Value": field.default_value || field.api_name,
-                  "Accessible by": field.read_only ? "System (Read Only)" : "Read/Write"
-                })),
+                ...fields.map(field => {
+                    let access = "Read/Write";
+                    if (field.read_only) {
+                        access = "System (Read Only)";
+                    } else if (field.profiles) {
+                        // Map Profiles to their associated Role names
+                        const accessList = field.profiles.map(p => {
+                            const pName = p.name;
+                            const roles = profileToRolesMap[pName];
+                            if (roles && roles.size > 0) {
+                                // e.g. "Standard (Sales Rep, Sales Manager)"
+                                return `${pName} (${Array.from(roles).join(', ')})`; 
+                            }
+                            return pName;
+                        });
+                        access = accessList.join("; ");
+                    }
+
+                    return {
+                        "Category": "Field",
+                        "Field Name": field.field_label,
+                        "Type of Fields": field.data_type,
+                        "Value": field.default_value || field.api_name,
+                        "Accessible by": access,
+                        "_picklistValues": (field.data_type === 'picklist' || field.data_type === 'multiselectpicklist') ? field.pick_list_values : null
+                    };
+                }),
                 
                 // Layouts
                 ...layouts.map(l => ({ 
@@ -244,23 +265,40 @@ async function main() {
     console.log();
 
     const zoho = new ZohoCRM();
-    const modulesWithFields = await zoho.getAllModulesWithFields();
-
-    // Fetch Users
-    console.log('\nFetching Users...');
-    let usersSummary = [];
+    
+    // Fetch Users first to map Profiles to Roles
+    console.log('\nFetching Users to map Roles...');
+    let users = [];
+    let profileToRolesMap = {};
+    
     try {
-        const users = await zoho.getUsers();
+        users = await zoho.getUsers();
         console.log(`✓ Found ${users.length} active users`);
-        usersSummary = users.map(u => ({ 
-            "Field Name": u.full_name, 
-            "Type of Fields": "User", 
-            "Value": u.email,
-            "Accessible by": u.role?.name || "No Role"
-        }));
+        
+        users.forEach(u => {
+            if (u.profile && u.role) {
+                const pName = u.profile.name;
+                const rName = u.role.name;
+                if (!profileToRolesMap[pName]) {
+                    profileToRolesMap[pName] = new Set();
+                }
+                profileToRolesMap[pName].add(rName);
+            }
+        });
     } catch(err) {
         console.log('⚠ Could not fetch users (Check scope ZohoCRM.users.READ)');
     }
+
+    const modulesWithFields = await zoho.getAllModulesWithFields(profileToRolesMap);
+
+    // Fetch Users summary for file
+    console.log('\nProcessing Users summary...');
+    let usersSummary = users.map(u => ({ 
+        "Field Name": u.full_name, 
+        "Type of Fields": "User", 
+        "Value": u.email,
+        "Accessible by": u.role?.name || "No Role"
+    }));
 
     // Save full data
     const fullData = {
@@ -304,6 +342,80 @@ async function main() {
     const csvFile = 'zoho-metadata.csv';
     fs.writeFileSync(csvFile, csvContent);
     console.log(`✓ CSV saved to: ${csvFile}`);
+
+    // ----------------------------------------
+    // EXCEL GENERATION
+    // ----------------------------------------
+    console.log('\nGenerating Excel file...');
+    const workbook = XLSX.utils.book_new();
+
+    // Helper to sanitize sheet names (max 31 chars, no special chars)
+    const sanitizeSheetName = (name) => {
+      // Replace forbidden characters with underscore and truncate to 31 chars
+      return (name || "Sheet").replace(/[\\/?*[\]:]/g, '_').substring(0, 31);
+    };
+
+    // 1. Add Users Sheet
+    if (usersSummary.length > 0) {
+        const usersData = usersSummary.map(u => ({
+            "Category": "User",
+            "Name": u["Field Name"],
+            "Type": "User",
+            "Value/API Name": u["Value"],
+            "Access/Notes": u["Accessible by"]
+        }));
+        const usersSheet = XLSX.utils.json_to_sheet(usersData);
+        XLSX.utils.book_append_sheet(workbook, usersSheet, "System Users");
+    }
+
+    // 2. Add Module Sheets
+    modulesWithFields.forEach(module => {
+        if (module.allItems && module.allItems.length > 0) {
+            const sheetData = [];
+            module.allItems.forEach(item => {
+                sheetData.push({
+                    "Category": item["Category"],
+                    "Name": item["Field Name"],
+                    "Type": item["Type of Fields"],
+                    "Value/API Name": item["Value"],
+                    "Access/Notes": item["Accessible by"]
+                });
+
+                // Expand picklist options for Excel
+                if (item["_picklistValues"] && Array.isArray(item["_picklistValues"])) {
+                    item["_picklistValues"].forEach(opt => {
+                         sheetData.push({
+                            "Category": "",
+                            "Name": `    ↳ ${opt.display_value}`,
+                            "Type": "Option",
+                            "Value/API Name": opt.actual_value,
+                            "Access/Notes": ""
+                         });
+                    });
+                }
+            });
+            
+            const rawName = module.moduleLabel || module.moduleName;
+            let uniqueSheetName = sanitizeSheetName(rawName);
+            
+            // Handle duplicate sheet names
+            let counter = 1;
+            while(workbook.SheetNames.includes(uniqueSheetName)) {
+                 // Try to keep as much of the original name as possible while appending counter
+                 const suffix = `_${counter}`;
+                 const baseLen = 31 - suffix.length;
+                 uniqueSheetName = rawName.replace(/[\\/?*[\]:]/g, '_').substring(0, baseLen) + suffix;
+                 counter++;
+            }
+            
+            const modSheet = XLSX.utils.json_to_sheet(sheetData);
+            XLSX.utils.book_append_sheet(workbook, modSheet, uniqueSheetName);
+        }
+    });
+
+    const excelFile = 'zoho-metadata.xlsx';
+    XLSX.writeFile(workbook, excelFile);
+    console.log(`✓ Excel file saved to: ${excelFile}`);
 
     console.log('\n' + '='.repeat(60));
     console.log('RESULTS SUMMARY');
