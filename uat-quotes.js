@@ -38,7 +38,7 @@ const REAL_DATE = '2026-04';
 const CONFIG = {
   token:               null,
   baseUrl:             'https://www.zohoapis.com/crm/v3',
-  subform:             'Quoted_Items_2',
+  subform:             'Quoted_Items',
   delayMs:             1500,       // pause between scenarios
   formulaWaitMs:       3000,       // fixed wait after POST/PATCH (direct & two-step)
   integrationWaitMs:   20000,      // max wait for DAP API callback
@@ -87,117 +87,12 @@ const log = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AUTH
+// Quotes API (moved to quotes-api.js)
 // ─────────────────────────────────────────────────────────────────────────────
-async function getAccessToken() {
-  let creds;
-  try {
-    creds = JSON.parse(await fs.readFile(path.join(process.cwd(), 'self_client.json'), 'utf8'));
-  } catch { throw new Error('Cannot read self_client.json'); }
+const quotesApi = require('./quotes-api')(CONFIG, log);
+const { getAccessToken, discoverPlaceholder, placeholderRow, createQuote, getQuote, patchSubformRow, deleteQuote, pollUntilIntegrated } = quotesApi;
 
-  if (creds.access_token && creds.expiry_time && Date.now() < creds.expiry_time - 60000) {
-    log.info('Using cached access token.'); return creds.access_token;
-  }
-  log.info('Requesting new access token...');
-  const params = new URLSearchParams({
-    client_id: creds.client_id, client_secret: creds.client_secret,
-    grant_type: creds.refresh_token ? 'refresh_token' : 'authorization_code',
-    ...(creds.refresh_token ? { refresh_token: creds.refresh_token } : { code: creds.code }),
-  });
-  const data = await (await fetch('https://accounts.zoho.com/oauth/v2/token',
-    { method: 'POST', body: params })).json();
-  if (!data.access_token) throw new Error(`Token error: ${JSON.stringify(data)}`);
-  const updated = { ...creds, access_token: data.access_token,
-    expiry_time: Date.now() + data.expires_in * 1000,
-    ...(data.refresh_token ? { refresh_token: data.refresh_token } : {}) };
-  await fs.writeFile(path.join(process.cwd(), 'self_client.json'), JSON.stringify(updated, null, 2));
-  log.info('New token saved.'); return data.access_token;
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// API WRAPPERS
-// ─────────────────────────────────────────────────────────────────────────────
-const apiH = () => ({
-  'Authorization': `Zoho-oauthtoken ${CONFIG.token}`,
-  'Content-Type': 'application/json',
-});
-
-async function discoverPlaceholder() {
-  log.info('Fetching placeholder product...');
-  const j = await (await fetch(`${CONFIG.baseUrl}/Products?fields=id,Product_Name&per_page=1`,
-    { headers: apiH() })).json();
-  const p = j?.data?.[0];
-  if (!p?.id) throw new Error('No active products found. Create one first.');
-  log.info(`Placeholder: "${p.Product_Name}" (${p.id})`); return { id: p.id, name: p.Product_Name };
-}
-
-const placeholderRow = () => ({
-  Product_Name: { id: CONFIG.placeholderProduct.id, name: CONFIG.placeholderProduct.name },
-  Quantity: 1, Unit_Price: 0, Total: 0,
-});
-
-async function createQuote(subject, customRow) {
-  const body = { data: [{
-    Subject: subject, Quote_Stage: 'Draft',
-    Quoted_Items:     [placeholderRow()],
-    [CONFIG.subform]: [customRow],
-  }]};
-  const j = await (await fetch(`${CONFIG.baseUrl}/Quotes`,
-    { method: 'POST', headers: apiH(), body: JSON.stringify(body) })).json();
-  const item = j?.data?.[0] ?? {};
-  return { id: item?.details?.id ?? null, apiCode: item?.code ?? 'UNKNOWN',
-           message: item?.message ?? '', raw: item };
-}
-
-async function getQuote(id) {
-  const r = await fetch(`${CONFIG.baseUrl}/Quotes/${id}`, { headers: apiH() });
-  const d = (await r.json())?.data?.[0] ?? {};
-  return { httpStatus: r.status, subformRow: (d[CONFIG.subform] ?? [])[0] ?? {} };
-}
-
-/** Update specific fields on an existing subform row via PUT */
-async function patchSubformRow(quoteId, rowId, updates) {
-  const body = { data: [{ id: quoteId,
-    [CONFIG.subform]: [{ id: rowId, ...updates }] }] };
-  const r = await fetch(`${CONFIG.baseUrl}/Quotes`, {
-    method: 'PUT', headers: apiH(), body: JSON.stringify(body) });
-  return await r.json();
-}
-
-async function deleteQuote(id) {
-  await fetch(`${CONFIG.baseUrl}/Quotes?ids=${id}`, { method: 'DELETE', headers: apiH() });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INTEGRATION POLLING
-// ─────────────────────────────────────────────────────────────────────────────
-/**
- * Poll the quote record until the DAP API has written COGS and MUF,
- * or CONFIG.integrationWaitMs is exceeded.
- * Returns the populated subform row.
- */
-async function pollUntilIntegrated(quoteId) {
-  const deadline = Date.now() + CONFIG.integrationWaitMs;
-  let attempt = 0;
-  while (Date.now() < deadline) {
-    attempt++;
-    await sleep(CONFIG.integrationPollMs);
-    const { httpStatus, subformRow } = await getQuote(quoteId);
-    if (httpStatus !== 200) throw new Error(`Poll GET HTTP ${httpStatus}`);
-    const pending = CONFIG.integrationSignalFields.filter(
-      f => subformRow[f] == null || subformRow[f] === 0);
-    const elapsed = ((Date.now() - deadline + CONFIG.integrationWaitMs) / 1000).toFixed(1);
-    if (pending.length === 0) {
-      log.poll(`Attempt ${attempt} (${elapsed}s) — ${C.green}Integration complete!${C.reset}`);
-      return subformRow;
-    }
-    log.poll(`Attempt ${attempt} (${elapsed}s) — Waiting for: ${pending.join(', ')}`);
-  }
-  throw new Error(
-    `Integration timeout after ${CONFIG.integrationWaitMs/1000}s. ` +
-    `[${CONFIG.integrationSignalFields.join(',')}] still null. ` +
-    `Check: (1) Kode_Bom valid? (2) DAP API reachable? (3) Zoho workflow active?`);
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DYNAMIC EXPECTED (mirrors confirmed Zoho formulas)
@@ -258,9 +153,6 @@ const SCENARIOS = [
     id: 'TC-F-01', mode: 'integration',
     name: 'Price = COGS/0.65 via integrasi DAP (formula dasar)',
     input: { Kode_Bom: REAL_BOM, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 10 },
-    input: { Quoted_Item: [
-        { Kode_Bom: REAL_BOM, Product_Name: 'Test Product', Quantity: 10, Shipping_Cost_per_Product: 5000 }
-    ], Kode_Bom: REAL_BOM, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 10 },
     notes: 'Verifikasi Price = actual_COGS/0.65. COGS dari DAP API, bukan injeksi manual.',
   },
 
@@ -387,7 +279,7 @@ async function runScenario(scenario) {
     const payload = { ...scenario.input };
 
     if (scenario.mode === 'direct') {
-    //   delete payload.Kode_Bom;  // no integration
+      delete payload.Kode_Bom;  // no integration
       log.info('Kode_Bom removed from payload → integration will NOT fire.');
     } else {
       delete payload.COGS;       // integration will write COGS
