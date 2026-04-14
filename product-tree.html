@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Tree</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #495057;
+    }
+    .tree-container {
+      max-width: 800px;
+      margin: 20px auto;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 20px 40px;
+    }
+    .tree ul {
+      padding-left: 20px;
+      margin-left: 12px;
+      list-style-type: none;
+      border-left: 2px solid #dee2e6;
+    }
+    .tree li {
+      margin: 0;
+      padding: 10px 0;
+      position: relative;
+    }
+    .tree li::before {
+      content: "";
+      position: absolute;
+      top: 20px;
+      left: -22px;
+      width: 20px;
+      height: 2px;
+      background-color: #dee2e6;
+    }
+    .tree li:last-child > ul {
+      border-left: none;
+    }
+    .node {
+      cursor: pointer;
+      font-weight: 500;
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .node:hover {
+        background-color: #e9ecef;
+    }
+    .node::before {
+      content: '▶ ';
+      font-size: 0.8em;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .node.open::before {
+      transform: rotate(90deg);
+    }
+    .product-name {
+      font-style: italic;
+      color: #007bff;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Product Tree</h1>
+  <div id="product-tree-container" class="tree-container"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      fetch('products-flat-list.json')
+        .then(response => response.json())
+        .then(data => {
+          const treeData = {};
+          const hierarchy = ['Kategori_Product', 'Sub_Kategori_Product', 'Sub_2_Kategori_Product', 'Brand_Product']
+
+          data.forEach(product => {
+            let currentLevel = treeData;
+            hierarchy.forEach(key => {
+              const value = product[key] || 'N/A';
+              if (!currentLevel[value]) {
+                currentLevel[value] = {};
+              }
+              currentLevel = currentLevel[value];
+            });
+            if (!currentLevel._products) {
+              currentLevel._products = [];
+            }
+            currentLevel._products.push(product.Product_Name);
+          });
+
+          const container = document.getElementById('product-tree-container');
+          const treeRoot = document.createElement('div');
+          treeRoot.className = 'tree';
+          treeRoot.appendChild(createTreeHtml(treeData));
+          container.appendChild(treeRoot);
+
+          container.addEventListener('click', function(event) {
+            if (event.target.classList.contains('node')) {
+              event.target.classList.toggle('open');
+              const nextUl = event.target.closest('li').querySelector('ul');
+              if (nextUl) {
+                nextUl.classList.toggle('hidden');
+              }
+            }
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching or displaying product data:', error);
+          document.getElementById('product-tree-container').innerHTML = '<p>Error loading product data.</p>';
+        });
+
+      function createTreeHtml(node) {
+        const ul = document.createElement('ul');
+        for (const key in node) {
+          if (key === '_products') {
+            if (node[key].length > 0) {
+              const li = document.createElement('li');
+              li.textContent = node[key][0]; // Show one product example
+              li.className = 'product-name';
+              ul.appendChild(li);
+            }
+            continue;
+          }
+          const li = document.createElement('li');
+          const span = document.createElement('span');
+          span.className = 'node open';
+          span.textContent = key;
+          li.appendChild(span);
+
+          const childrenUl = createTreeHtml(node[key]);
+          if (childrenUl.hasChildNodes()) {
+            li.appendChild(childrenUl);
+          }
+          ul.appendChild(li);
+        }
+        return ul;
+      }
+    });
+  </script>
+
+</body>
+</html>
