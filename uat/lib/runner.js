@@ -117,7 +117,7 @@ async function runScenario(scenario, api, multiApi) {
       log.info('Direct mode: Kode_Bom removed — integration will NOT fire.');
 
       log.info('Step 1: Creating Quote...');
-      const created = await createQuote(subject, payload);
+      const created = await createQuote(subject, payload, scenario.quoteFields);
       result.apiCode = created.apiCode;
 
       if (scenario.expectError) {
@@ -232,7 +232,8 @@ async function runScenario(scenario, api, multiApi) {
 
     // ── Step 1: Create ─────────────────────────────────────────────────────
     log.info('Step 1: Creating Quote (all subforms in one POST)...');
-    const created = await createMultiBrandQuote(subject, setup, headerInputs);
+    //TODO integrate scenario.quoteFields
+    const created = await createMultiBrandQuote(subject,setup, headerInputs);
     result.apiCode = created.apiCode;
 
     if (created.apiCode !== 'SUCCESS' || !created.id) {
