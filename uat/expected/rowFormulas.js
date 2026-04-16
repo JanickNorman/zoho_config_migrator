@@ -54,7 +54,8 @@ function computeDynamicExpected(actualRow, input, overrides = {}) {
     Total_COGS:       totalCOGS,
     Total_Price:      totalPrice,
     Total_Net_Income: netIncome,
-    GPR:              gpr,
+    GPR:              gpr,   // QUOTED_ITEMS_2 and beyond
+    GPR_1:            gpr,   // QUOTED_ITEMS (first subform uses GPR_1 in Zoho)
   };
 }
 

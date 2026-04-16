@@ -73,8 +73,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Final_Price', 'GPR'],
-    notes: 'KK: Final_Price = Price×0.5×0.5×0.5 = Price×0.125. Cascade tidak pernah menghasilkan harga negatif.',
+    assertFields: ['Final_Price', 'GPR_1', 'GPR'],
+    notes: 'KK: Final_Price = Price×0.5×0.5×0.5 = Price×0.125 (GPR_1). Serta: GPR normal. Cascade tidak pernah menghasilkan harga negatif.',
   },
 
   // Spec:  Decimal discount 2.5% accepted correctly
@@ -137,8 +137,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Price_Quote', 'Final_Price', 'Total_Net_Income', 'GPR'],
-    notes: '⚠ KK: GPR sangat negatif. Serta: GPR normal. Catat apakah sistem memperingatkan baris KK.',
+    assertFields: ['Price_Quote', 'Final_Price', 'Total_Net_Income', 'GPR_1', 'GPR'],
+    notes: '⚠ KK: GPR_1 sangat negatif (QUOTED_ITEMS). Serta: GPR normal (QUOTED_ITEMS_2). Catat apakah sistem memperingatkan baris KK.',
   },
 
   // Spec:  Different discount levels per brand in same quote — no cross-contamination
@@ -157,8 +157,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Final_Price', 'GPR'],
-    notes: 'KK: ×0.95. Serta: ×0.97×0.98. Diskon satu brand tidak mempengaruhi baris brand lain.',
+    assertFields: ['Final_Price', 'GPR_1', 'GPR'],
+    notes: 'KK: ×0.95 (GPR_1 di QUOTED_ITEMS). Serta: ×0.97×0.98 (GPR di QUOTED_ITEMS_2). Diskon satu brand tidak mempengaruhi baris brand lain.',
   },
 
   // ── TOTAL_COGS: COGS × Qty ────────────────────────────────────────────────
@@ -251,8 +251,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Total_Net_Income', 'GPR'],
-    notes: 'Net_Income positif di semua baris. GPR = margin dari Set_GPR (35% jika Set_GPR=0.65).',
+    assertFields: ['Total_Net_Income', 'GPR_1', 'GPR'],
+    notes: 'Net_Income positif di semua baris. GPR_1 di QUOTED_ITEMS, GPR di QUOTED_ITEMS_2 (35% jika Set_GPR=0.65).',
   },
 
   // Spec:  Net_Income negative when Corp.Price < COGS; other brand unaffected
@@ -268,8 +268,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Total_Net_Income', 'GPR'],
-    notes: '⚠ KK: Net_Income < 0, GPR << 0. Serta: normal. Catat warning sistem untuk baris KK.',
+    assertFields: ['Total_Net_Income', 'GPR_1', 'GPR'],
+    notes: '⚠ KK: Net_Income < 0, GPR_1 << 0 (QUOTED_ITEMS). Serta: GPR normal. Catat warning sistem untuk baris KK.',
   },
 
   // ── GPR EDGE CASES ────────────────────────────────────────────────────────
@@ -287,8 +287,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['GPR', 'Total_Net_Income'],
-    notes: 'KK Set_GPR=1.0 → Price=COGS → GPR=0%, Net_Income=0. Serta: GPR=35%.',
+    assertFields: ['GPR_1', 'GPR', 'Total_Net_Income'],
+    notes: 'KK Set_GPR=1.0 → Price=COGS → GPR_1=0% (QUOTED_ITEMS), Net_Income=0. Serta: GPR=35% (QUOTED_ITEMS_2).',
   },
 
   // Spec:  GPR div-by-zero guard when Disc=100% → Total_Price=0
@@ -304,8 +304,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Final_Price', 'Total_Price', 'GPR'],
-    notes: 'KK: guard If(Total_Price≠0,...,0) → GPR=0 (tidak error). Serta: GPR=35% (normal).',
+    assertFields: ['Final_Price', 'Total_Price', 'GPR_1', 'GPR'],
+    notes: 'KK: guard aktif → GPR_1=0 (QUOTED_ITEMS, tidak error). Serta: GPR=35% (QUOTED_ITEMS_2, normal).',
   },
 
   // Spec:  GPR below 35% due to discount — system response (warn vs block?)
@@ -321,8 +321,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['GPR'],
-    notes: '⚠ KK D1=50% → GPR menjadi 35%×0.5÷(1-0.5*0.35) [jauh < 35%]. KONFIRMASI: warn atau hard-block?',
+    assertFields: ['GPR_1', 'GPR'],
+    notes: '⚠ KK D1=50% → GPR_1 jauh < 35% (QUOTED_ITEMS). Serta: GPR normal (QUOTED_ITEMS_2). KONFIRMASI: warn atau hard-block?',
   },
 
   // ── REALISTIC FULL HOTEL SETS ─────────────────────────────────────────────
@@ -342,8 +342,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Price', 'Final_Price', 'Total_COGS', 'Total_Price', 'GPR'],
-    notes: 'Full hotel bed set KK saja. 6 baris, Disc=5%. Verifikasi semua rows terisi COGS dari integrasi.',
+    assertFields: ['Price', 'Final_Price', 'Total_COGS', 'Total_Price', 'GPR_1'],
+    notes: 'Full hotel bed set KK saja (QUOTED_ITEMS → GPR_1). 6 baris, Disc=5%. Verifikasi semua rows terisi COGS dari integrasi.',
   },
 
   // Spec:  KK + Serta full package realistic order (Cityloog-scale quantities)
@@ -365,8 +365,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Price', 'Final_Price', 'Total_COGS', 'Total_Price', 'Total_Net_Income', 'GPR'],
-    notes: 'Skenario hotel 131 kamar. KK Disc=5%, Serta tanpa diskon. 8 baris total dari 2 brand.',
+    assertFields: ['Price', 'Final_Price', 'Total_COGS', 'Total_Price', 'Total_Net_Income', 'GPR_1', 'GPR'],
+    notes: 'Skenario hotel 131 kamar. KK Disc=5% (GPR_1 di QUOTED_ITEMS), Serta tanpa diskon (GPR di QUOTED_ITEMS_2). 8 baris total.',
   },
 ];
 

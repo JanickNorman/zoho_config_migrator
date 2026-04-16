@@ -3,7 +3,7 @@
 const fs = require('fs/promises');
 
 const { CONFIG, CLI_MODE }         = require('./config');
-const { C, log, sleep, fmt }       = require('./logger');
+const { C, log, sleep, fmt, approxEq }       = require('./logger');
 const { processQuoteDAP }          = require('../../dap/processQuote');
 const { pollUntilIntegrated }      = require('./poll');
 const { verify, verifyFields,
@@ -329,30 +329,58 @@ async function runScenario(scenario, api, multiApi) {
       printAssertions(assertions);
 
     } else {
-      // Assert row-level formula fields per subform per row
+      // Build per-subform actual/expected maps for use by both assert() and assertFields paths
+      const actualBySubform   = {};  // { [sfName]: [ actualRow, ... ] }
+      const expectedBySubform = {};  // { [sfName]: [ expectedRow, ... ] }
+
       for (const sfName of subformNames) {
-        const sfRows   = rowsBySubform[sfName] ?? [];
-        const sfInputs = setup[sfName] ?? [];
-        const label    = brandLabels[sfName] || sfName;
-        log.info(`\n  ${label}:`);
-
-        sfRows.forEach((actualRow, idx) => {
-          const inputRow  = sfInputs[idx] ?? {};
-          const override  = twoStepOverrides[sfName]?.[idx] ?? {};
-          let expected    = computeDynamicExpected(actualRow, inputRow, override);
-          if (scenario.assertOverride) Object.assign(expected, scenario.assertOverride);
-
-          const assertable = scenario.assertFields
-            || Object.keys(expected).filter(k => !k.startsWith('_'));
-          const assertions = verifyFields(actualRow, expected, assertable);
-
-          log.info(`    Row ${idx+1} (COGS=${fmt(actualRow.COGS)}):`);
-          assertions.forEach(a => {
-            const line = `      ${a.field.padEnd(22)} expected: ${fmt(a.expected).padStart(14)}  actual: ${fmt(a.actual).padStart(14)}`;
-            a.pass ? log.pass(line) : log.fail(line);
-          });
-          allAssertions.push(...assertions.map(a => ({ ...a, subform: sfName, row: idx + 1 })));
+        actualBySubform[sfName]   = rowsBySubform[sfName] ?? [];
+        expectedBySubform[sfName] = (rowsBySubform[sfName] ?? []).map((actualRow, idx) => {
+          const inputRow = (setup[sfName] ?? [])[idx] ?? {};
+          const override = twoStepOverrides[sfName]?.[idx] ?? {};
+          const exp      = computeDynamicExpected(actualRow, inputRow, override);
+          if (scenario.assertOverride) Object.assign(exp, scenario.assertOverride);
+          return exp;
         });
+      }
+
+      // ── Custom assert function (flexible, scenario-defined) ───────────────
+      if (typeof scenario.assert === 'function') {
+        log.info('  Using custom assert function...');
+        const customAssertions = [];
+        const output = {
+          assert(label, actualVal, expectedVal) {
+            const pass = approxEq(actualVal, expectedVal);
+            const a = { field: label, expected: expectedVal, actual: actualVal, pass };
+            const line = `      ${label.padEnd(22)} expected: ${fmt(expectedVal).padStart(14)}  actual: ${fmt(actualVal).padStart(14)}`;
+            pass ? log.pass(line) : log.fail(line);
+            customAssertions.push(a);
+          },
+        };
+        scenario.assert(actualBySubform, expectedBySubform, output);
+        allAssertions.push(...customAssertions);
+
+      } else {
+        // ── Standard assertFields path ────────────────────────────────────
+        for (const sfName of subformNames) {
+          const sfRows   = actualBySubform[sfName];
+          const label    = brandLabels[sfName] || sfName;
+          log.info(`\n  ${label}:`);
+
+          sfRows.forEach((actualRow, idx) => {
+            const expected   = expectedBySubform[sfName][idx];
+            const assertable = scenario.assertFields
+              || Object.keys(expected).filter(k => !k.startsWith('_'));
+            const assertions = verifyFields(actualRow, expected, assertable);
+
+            log.info(`    Row ${idx+1} (COGS=${fmt(actualRow.COGS)}):`);
+            assertions.forEach(a => {
+              const line = `      ${a.field.padEnd(22)} expected: ${fmt(a.expected).padStart(14)}  actual: ${fmt(a.actual).padStart(14)}`;
+              a.pass ? log.pass(line) : log.fail(line);
+            });
+            allAssertions.push(...assertions.map(a => ({ ...a, subform: sfName, row: idx + 1 })));
+          });
+        }
       }
     }
 

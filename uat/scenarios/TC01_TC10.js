@@ -42,8 +42,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Price', 'Price_Quote', 'Final_Price', 'GPR'],
-    notes: 'Set_GPR=0.65 → Price=COGS/0.65. GPR per baris harus tepat 35%.',
+    assertFields: ['Price', 'Price_Quote', 'Final_Price', 'GPR_1', 'GPR'],
+    notes: 'Set_GPR=0.65 → Price=COGS/0.65. GPR_1 di QUOTED_ITEMS, GPR di QUOTED_ITEMS_2. Harus tepat 35%.',
   },
 
   // Spec:  Price = COGS / 0.60  (40% GPR target — different product line margin)
@@ -60,8 +60,20 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Price', 'GPR'],
-    notes: 'Set_GPR=0.60 → Price=COGS/0.60. GPR harus ~40% per baris.',
+    assert: (actual, expected, output) => {
+      // Both subforms have the same COGS and Set_GPR=0.60, so spot-check one row from each
+      const kkActual = actual[QUOTED_ITEMS][0];
+      const kkExp    = expected[QUOTED_ITEMS][0];
+      const srActual = actual[QUOTED_ITEMS_2][0];
+      const srExp    = expected[QUOTED_ITEMS_2][0];
+      console.log(JSON.stringify(actual, null, 2));
+
+      output.assert('KK  Price',  kkActual.Price, kkExp.Price);
+      output.assert('KK  GPR_1',  kkActual.GPR_1, kkExp.GPR_1);
+      output.assert('Serta Price', srActual.Price, srExp.Price);
+      output.assert('Serta GPR',   srActual.GPR,   srExp.GPR);
+    },
+    notes: 'Set_GPR=0.60 → Price=COGS/0.60. GPR_1 di QUOTED_ITEMS, GPR di QUOTED_ITEMS_2. ~40% per baris.',
   },
 
   // Spec:  Price = COGS / 1.0  (jual modal — zero margin, GPR=0)
@@ -75,8 +87,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Price', 'Total_Net_Income', 'GPR'],
-    notes: 'Set_GPR=1.0 → Price=COGS → GPR=0%, Net_Income=0. Edge case produk tanpa markup.',
+    assertFields: ['Price', 'Total_Net_Income', 'GPR_1'],
+    notes: 'Set_GPR=1.0 → Price=COGS → GPR_1=0% (QUOTED_ITEMS), Net_Income=0. Edge case produk tanpa markup.',
   },
 
   // Spec:  COGS = 0 → Price = 0 (no division-by-zero since numerator is 0)
@@ -197,10 +209,10 @@ const SCENARIOS = [
       ],
     },
     brandLabels:  LABELS,
-    assertFields: ['Final_Price', 'Total_Price', 'GPR'],
+    assertFields: ['Final_Price', 'Total_Price', 'GPR_1', 'GPR'],
     notes: (
-      'KK: Final_Price=0, Total_Price=0, GPR=0 (proteksi If(Total_Price≠0,...,0)). ' +
-      'Serta: GPR normal (35%). Verifikasi guard tidak error.'
+      'KK: Final_Price=0, Total_Price=0, GPR_1=0 (QUOTED_ITEMS, guard aktif). ' +
+      'Serta: GPR=35% (QUOTED_ITEMS_2, normal). Verifikasi guard tidak error.'
     ),
   },
 ];
