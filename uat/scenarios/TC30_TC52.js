@@ -5,7 +5,7 @@
  *
  * type: 'integration-final'
  *   setup         → quote fixture (brands/products providing the revenue base)
- *   additionalFee → { Fee_Pct, Discount_Pct, Label, Shipping_Cost, Shipping_Cost_Cust }
+ *   additionalFee → { Fee_Pct, Discount_Pct, Label, Shipping_Cost, Shipping_Cost_Customer }
  *   assertFields  → which Final Grand Total fields to assert
  *
  * Confirmed formulas (v2):
@@ -195,19 +195,19 @@ const SCENARIOS = [
     notes: 'Shipping_Cost = Rp 1.000.000 lump sum. Final_COGS += 1.000.000 (bukan ×Qty).',
   },
 
-  // Spec:  Shipping_Cost_Cust does NOT enter Final_COGS (PDF-only)
+  // Spec:  Shipping_Cost_Customer does NOT enter Final_COGS (PDF-only)
   {
     id: 'TC-F-39', type: 'integration-final',
-    name: 'Shipping_Cost_Cust – tidak masuk Final_COGS (PDF customer only)',
+    name: 'Shipping_Cost_Customer – tidak masuk Final_COGS (PDF customer only)',
     setup: {
       [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 100, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Shipping_Cost: 0, Shipping_Cost_Cust: 1500000 },
+    additionalFee: { Shipping_Cost: 0, Shipping_Cost_Customer: 1500000 },
     assertFields:  ['Final_COGS'],
-    notes: 'Shipping_Cost_Cust=1.500.000 hanya untuk PDF customer. Final_COGS tidak berubah.',
+    notes: 'Shipping_Cost_Customer=1.500.000 hanya untuk PDF customer. Final_COGS tidak berubah.',
   },
 
   // ── R_DISCOUNT ────────────────────────────────────────────────────────────
@@ -391,7 +391,7 @@ const SCENARIOS = [
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Fee_Pct: 0.025, Discount_Pct: 0.02, Label: 650000, Shipping_Cost: 1000000, Shipping_Cost_Cust: 1500000 },
+    additionalFee: { Fee_Pct: 0.025, Discount_Pct: 0.02, Label: 650000, Shipping_Cost: 1000000, Shipping_Cost_Customer: 1500000 },
     assertFields:  ['Final_Total_Price', 'R_Fee', 'R_Discount', 'Final_COGS', 'Total_GPR_Pct', 'Final_Grand_Total_Rounded'],
     notes: 'Skenario hotel 131 kamar, 10 produk, 2 brand. KK Disc=5%, Serta tanpa diskon. Semua fee input.',
   },
