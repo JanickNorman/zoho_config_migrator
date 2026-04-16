@@ -22,12 +22,12 @@
 const { REAL_DATE }                            = require('../lib/config');
 const { PRODUCTS, BRAND_SUBFORM, BRAND_LABEL } = require('../lib/products');
 
-const KK = BRAND_SUBFORM.KING_KOIL;
-const SE = BRAND_SUBFORM.SERTA;
+const QUOTED_ITEMS = BRAND_SUBFORM.QUOTED_ITEMS_1;
+const QUOTED_ITEMS_2 = BRAND_SUBFORM.QUOTED_ITEMS_2;
 
 const LABELS = {
-  [KK]: BRAND_LABEL.KING_KOIL,
-  [SE]: BRAND_LABEL.SERTA,
+  [QUOTED_ITEMS]: BRAND_LABEL.KING_KOIL,
+  [QUOTED_ITEMS_2]: BRAND_LABEL.SERTA,
 };
 
 const SCENARIOS = [
@@ -39,13 +39,13 @@ const SCENARIOS = [
     id: 'TC-F-30', type: 'integration-final',
     name: 'PPN 11% per subform – KK dan Serta masing-masing independen',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_180, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
-      [SE]: [
-        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET_210, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_CASE_53, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
+      [QUOTED_ITEMS_2]: [
+        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -59,9 +59,9 @@ const SCENARIOS = [
     id: 'TC-F-31', type: 'integration-final',
     name: 'Grand_Total per subform = Total_Price + PPN_11 (formula sederhana v2)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE_50, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE_60, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
         { Kode_Bom: PRODUCTS.KING_KOIL.BOLSTER_CASE,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
       ],
     },
@@ -78,14 +78,14 @@ const SCENARIOS = [
     id: 'TC-F-32', type: 'integration-final',
     name: 'R_Fee = Fee% × Final_Total_Price – Fee=2.5%, basis global semua brand',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_180, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_220, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 80,  Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 80,  Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
-      [SE]: [
-        { Kode_Bom: PRODUCTS.SERTA.DUVET_COVER_190, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET_210,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+      [QUOTED_ITEMS_2]: [
+        { Kode_Bom: PRODUCTS.SERTA.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -99,7 +99,7 @@ const SCENARIOS = [
     id: 'TC-F-33', type: 'integration-final',
     name: 'R_Fee = 0 saat Fee_Pct=0 (tidak ada komisi pihak ketiga)',
     setup: {
-      [KK]: [
+      [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.BOLSTER_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
         { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_INSERT, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
@@ -115,7 +115,7 @@ const SCENARIOS = [
     id: 'TC-F-34', type: 'integration-final',
     name: 'R_Fee – Fee_Pct kosong (IsEmpty guard → 0, tidak error)',
     setup: {
-      [KK]: [
+      [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.MATTRESS_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
     },
@@ -130,8 +130,8 @@ const SCENARIOS = [
     id: 'TC-F-35', type: 'integration-final',
     name: 'R_Fee – Fee_Pct=100% (edge case ekstrem, Total_GPR sangat negatif)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 50, Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 50, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -147,10 +147,10 @@ const SCENARIOS = [
     id: 'TC-F-36', type: 'integration-final',
     name: 'Label masuk ke Final_COGS (Rp total manual, sudah termasuk qty)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_180, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE_50,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -164,7 +164,7 @@ const SCENARIOS = [
     id: 'TC-F-37', type: 'integration-final',
     name: 'Label = 0 – tidak mempengaruhi Final_COGS',
     setup: {
-      [KK]: [
+      [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.BOLSTER_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
       ],
     },
@@ -181,12 +181,12 @@ const SCENARIOS = [
     id: 'TC-F-38', type: 'integration-final',
     name: 'Shipping_Cost – lump sum masuk ke Final_COGS (bukan dikali Qty)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_180, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_220, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 80,  Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 80,  Set_GPR: 0.65 },
       ],
-      [SE]: [
-        { Kode_Bom: PRODUCTS.SERTA.DUVET_COVER_190, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+      [QUOTED_ITEMS_2]: [
+        { Kode_Bom: PRODUCTS.SERTA.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -200,8 +200,8 @@ const SCENARIOS = [
     id: 'TC-F-39', type: 'integration-final',
     name: 'Shipping_Cost_Cust – tidak masuk Final_COGS (PDF customer only)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_300, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 100, Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 100, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -217,14 +217,14 @@ const SCENARIOS = [
     id: 'TC-F-40', type: 'integration-final',
     name: 'R_Discount = Discount% × Final_Total_Price (nilai potongan Rp, bukan after-disc price)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_180, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
         { Kode_Bom: PRODUCTS.KING_KOIL.BOLSTER_CASE,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
       ],
-      [SE]: [
-        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET_210,     Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR_51, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
+      [QUOTED_ITEMS_2]: [
+        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET,     Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -238,7 +238,7 @@ const SCENARIOS = [
     id: 'TC-F-41', type: 'integration-final',
     name: 'R_Discount = 0 saat Discount_Pct=0 (tidak ada diskon tambahan)',
     setup: {
-      [KK]: [
+      [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_INSERT, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
     },
@@ -255,16 +255,16 @@ const SCENARIOS = [
     id: 'TC-F-42', type: 'integration-final',
     name: 'Final_COGS – semua komponen (COGS_agg + R_Fee + Label + Shipping)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_180,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE_50,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
         { Kode_Bom: PRODUCTS.KING_KOIL.BOLSTER_CASE,     Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
         { Kode_Bom: PRODUCTS.KING_KOIL.MATTRESS_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
-      [SE]: [
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR_51,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.MATTRESS_PROTECTOR_152, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+      [QUOTED_ITEMS_2]: [
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.MATTRESS_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -278,10 +278,10 @@ const SCENARIOS = [
     id: 'TC-F-43', type: 'integration-final',
     name: 'Final_COGS = Total_COGS murni (tanpa Fee/Label/Shipping)',
     setup: {
-      [KK]: [
+      [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_220, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 60, Set_GPR: 0.65 },
       ],
-      [SE]: [
+      [QUOTED_ITEMS_2]: [
         { Kode_Bom: PRODUCTS.SERTA.DUVET_COVER_270, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 60, Set_GPR: 0.65 },
       ],
     },
@@ -296,13 +296,13 @@ const SCENARIOS = [
     id: 'TC-F-44', type: 'integration-final',
     name: 'Total_GPR_Pct – turun karena Fee + Label + Shipping (< margin Set_GPR)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_280, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 80,  Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 80,  Set_GPR: 0.65 },
       ],
-      [SE]: [
-        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET_210, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET_290, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 80,  Set_GPR: 0.65 },
+      [QUOTED_ITEMS_2]: [
+        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 80,  Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -316,8 +316,8 @@ const SCENARIOS = [
     id: 'TC-F-45', type: 'integration-final',
     name: 'Total_GPR_Pct – negatif (Shipping_Cost >> Final_Total_Price)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE_50, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 5, Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 5, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -333,17 +333,17 @@ const SCENARIOS = [
     id: 'TC-F-46', type: 'integration-final',
     name: 'Final_Total_Price = Σ Total_Price semua subform (KK + Serta)',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_180, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
         { Kode_Bom: PRODUCTS.KING_KOIL.BOLSTER_CASE,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE_50,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
         { Kode_Bom: PRODUCTS.KING_KOIL.MATTRESS_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
       ],
-      [SE]: [
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR_51,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR_60,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.MATTRESS_PROTECTOR_106, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+      [QUOTED_ITEMS_2]: [
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.MATTRESS_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -357,9 +357,9 @@ const SCENARIOS = [
     id: 'TC-F-47', type: 'integration-final',
     name: 'Final_Grand_Total_Rounded = ROUNDDOWN ke satuan ribu',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_240, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_300,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -375,19 +375,19 @@ const SCENARIOS = [
     id: 'TC-F-48', type: 'integration-final',
     name: 'Full hotel package – KK + Serta semua BOM, semua fee, qty 131 kamar',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER_180,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210,     Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET,     Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
         { Kode_Bom: PRODUCTS.KING_KOIL.BOLSTER_CASE,       Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE_50,     Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE,     Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65, Discount_1: 5 },
         { Kode_Bom: PRODUCTS.KING_KOIL.MATTRESS_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
         { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_INSERT,       Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65, Discount_1: 5 },
       ],
-      [SE]: [
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR_51,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR_60,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.MATTRESS_PROTECTOR_152, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.MATTRESS_PROTECTOR_106, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+      [QUOTED_ITEMS_2]: [
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR,    Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.MATTRESS_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.MATTRESS_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
@@ -401,19 +401,19 @@ const SCENARIOS = [
     id: 'TC-F-49', type: 'integration-final',
     name: 'Full hotel package – 300 kamar, semua ukuran Pillow Case + Pillow Protector',
     setup: {
-      [KK]: [
-        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE_50, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 600, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE_60, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 300, Set_GPR: 0.65, Discount_1: 5 },
+      [QUOTED_ITEMS]: [
+        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 600, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 300, Set_GPR: 0.65, Discount_1: 5 },
         { Kode_Bom: PRODUCTS.KING_KOIL.BOLSTER_CASE,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 600, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_210, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 300, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_280, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 200, Set_GPR: 0.65, Discount_1: 5 },
-        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET_300, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 100, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 300, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 200, Set_GPR: 0.65, Discount_1: 5 },
+        { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 100, Set_GPR: 0.65, Discount_1: 5 },
       ],
-      [SE]: [
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_CASE_53,        Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 600, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_CASE_62,        Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 300, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR_51,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 600, Set_GPR: 0.65 },
-        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR_60,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 300, Set_GPR: 0.65 },
+      [QUOTED_ITEMS_2]: [
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_CASE,        Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 600, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_CASE,        Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 300, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 600, Set_GPR: 0.65 },
+        { Kode_Bom: PRODUCTS.SERTA.PILLOW_PROTECTOR,   Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 300, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
