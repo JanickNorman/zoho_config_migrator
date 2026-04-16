@@ -188,11 +188,9 @@ async function processRow(row, dapHeaders) {
 
 // ─── Main function ────────────────────────────────────────────────────────────
 
-async function processQuoteDAP(recordId, { log = true } = {}) {
-  if (log) {
-    console.log('=== FUNCTION START ===');
-    console.log('RECORD ID:', recordId);
-  }
+async function processQuoteDAP(recordId) {
+  console.log('=== FUNCTION START ===');
+  console.log('RECORD ID:', recordId);
 
   const zohoToken = await getZohoAccessToken();
 
@@ -229,9 +227,7 @@ async function processQuoteDAP(recordId, { log = true } = {}) {
     const subformList = record[subformName];
     if (!subformList || subformList.length === 0) continue;
 
-    if (log) {
-      console.log(`\nProcessing subform: ${subformName} (${subformList.length} rows)`);
-    }
+    console.log(`\nProcessing subform: ${subformName} (${subformList.length} rows)`);
     const updatedItems = [];
 
     for (const row of subformList) {
@@ -244,17 +240,13 @@ async function processQuoteDAP(recordId, { log = true } = {}) {
   }
 
   // Push updates back to Zoho
-  if (log) {
-    console.log('\nFINAL UPDATE BODY:', JSON.stringify({ data: [updateMap] }, null, 2));
-  }
+  console.log('\nFINAL UPDATE BODY:', JSON.stringify({ data: [updateMap] }, null, 2));
   const updateResponse = await axios.put(
     `https://www.zohoapis.com/crm/v2.1/Quotes/${recordId}`,
     { data: [updateMap] },
     { headers: { Authorization: `Zoho-oauthtoken ${zohoToken}`, 'Content-Type': 'application/json' } }
   );
-  if (log) {
-    console.log('UPDATE RESPONSE:', JSON.stringify(updateResponse.data, null, 2));
-  }
+  console.log('UPDATE RESPONSE:', JSON.stringify(updateResponse.data, null, 2));
 
   // Check update response for success
   const firstResp = updateResponse.data?.data?.[0];
@@ -266,30 +258,8 @@ async function processQuoteDAP(recordId, { log = true } = {}) {
     Refresh_Flag: true,
   });
 
-  if (log) {
-    console.log('=== FUNCTION END ===');
-  }
+  console.log('=== FUNCTION END ===');
 }
 
-// ─── CLI entrypoint ───────────────────────────────────────────────────────────
-
-async function main() {
-  const recordId = process.argv[2];
-  if (!recordId) {
-    console.error('Usage: node dap/processQuote.js <recordId>');
-    process.exit(1);
-  }
-
-  const log = !process.argv.includes('--no-log');
-  try {
-    await processQuoteDAP(recordId, { log });
-  } catch (e) {
-    console.error('ERROR:', e.message);
-    if (e.response) console.error('Response:', JSON.stringify(e.response.data, null, 2));
-    process.exit(1);
-  }
-}
-
-// main();
 
 module.exports = { processQuoteDAP };
