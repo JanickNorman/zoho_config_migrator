@@ -5,18 +5,18 @@
  *
  * type: 'integration-final'
  *   setup         → quote fixture (brands/products providing the revenue base)
- *   additionalFee → { Fee_Pct, Discount_Pct, Label, Shipping_Cost, Shipping_Cost_Customer }
+ *   additionalFee → { Fee, Discount1, Label, Shipping_Cost, Shipping_Cost_Customer }
  *   assertFields  → which Final Grand Total fields to assert
  *
  * Confirmed formulas (v2):
- *   R_Fee            = Fee_Pct × Final_Total_Price
- *   R_Discount       = Discount_Pct × Final_Total_Price   [amount in Rp, not after-disc price]
- *   Final_COGS       = Σ(Total_COGS rows) + R_Fee + Label + Shipping_Cost
+ *   Fee            = Fee × Final_Total_Price
+ *   Discount2       = Discount1 × Final_Total_Price   [amount in Rp, not after-disc price]
+ *   Final_COGS       = Σ(Total_COGS rows) + Fee + Label + Shipping_Cost
  *   Final_Total_Price= Σ(Total_Price_N all subforms)
  *   Final_PPN_11     = 0.11 × Final_Total_Price
  *   Final_Grand_Total= Final_Total_Price + Final_PPN_11
  *   Final_Grand_Total_Rounded = ROUNDDOWN(Final_Grand_Total, -3)
- *   Total_GPR_Pct    = (Final_Total_Price - Final_COGS) / Final_Total_Price × 100
+ *   Total_GPR    = (Final_Total_Price - Final_COGS) / Final_Total_Price × 100
  */
 
 const { REAL_DATE }                            = require('../lib/config');
@@ -71,12 +71,12 @@ const SCENARIOS = [
     notes: 'Grand_Total = Total_Price + PPN_11. Final_Grand_Total_Rounded = ROUNDDOWN ke satuan ribu.',
   },
 
-  // ── R_FEE ─────────────────────────────────────────────────────────────────
+  // ── Fee ─────────────────────────────────────────────────────────────────
 
-  // Spec:  R_Fee = Fee_Pct × Final_Total_Price (global, not per-brand)
+  // Spec:  Fee = Fee_Pct × Final_Total_Price (global, not per-brand)
   {
     id: 'TC-F-32', type: 'integration-final',
-    name: 'R_Fee = Fee% × Final_Total_Price – Fee=2.5%, basis global semua brand',
+    name: 'Fee = Fee% × Final_Total_Price – Fee=2.5%, basis global semua brand',
     setup: {
       [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
@@ -89,15 +89,15 @@ const SCENARIOS = [
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Fee_Pct: 0.025 },
-    assertFields:  ['R_Fee', 'Final_COGS', 'Total_GPR_Pct'],
-    notes: 'R_Fee = 2.5% × Final_Total_Price. Masuk ke Final_COGS → menekan Total_GPR_Pct.',
+    additionalFee: { Fee: 0.025 },
+    assertFields:  ['Fee1', 'Final_COGS', 'Total_GPR'],
+    notes: 'Fee = 2.5% × Final_Total_Price. Masuk ke Final_COGS → menekan Total_GPR.',
   },
 
-  // Spec:  Fee_Pct = 0 → R_Fee = 0
+  // Spec:  Fee_Pct = 0 → Fee = 0
   {
     id: 'TC-F-33', type: 'integration-final',
-    name: 'R_Fee = 0 saat Fee_Pct=0 (tidak ada komisi pihak ketiga)',
+    name: 'Fee = 0 saat Fee_Pct=0 (tidak ada komisi pihak ketiga)',
     setup: {
       [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.BOLSTER_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 262, Set_GPR: 0.65 },
@@ -105,15 +105,15 @@ const SCENARIOS = [
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Fee_Pct: 0 },
-    assertFields:  ['R_Fee', 'Final_COGS'],
-    notes: 'R_Fee = 0. Final_COGS = Σ(Total_COGS) saja.',
+    additionalFee: { Fee: 0 },
+    assertFields:  ['Fee', 'Final_COGS'],
+    notes: 'Fee = 0. Final_COGS = Σ(Total_COGS) saja.',
   },
 
-  // Spec:  Fee_Pct null/omitted → R_Fee = 0 (IsEmpty guard)
+  // Spec:  Fee_Pct null/omitted → Fee = 0 (IsEmpty guard)
   {
     id: 'TC-F-34', type: 'integration-final',
-    name: 'R_Fee – Fee_Pct kosong (IsEmpty guard → 0, tidak error)',
+    name: 'Fee – Fee_Pct kosong (IsEmpty guard → 0, tidak error)',
     setup: {
       [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.MATTRESS_PROTECTOR, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
@@ -121,23 +121,23 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: {},
-    assertFields:  ['R_Fee'],
+    assertFields:  ['Fee'],
     notes: '⚠ IsEmpty guard: null Fee_Pct → 0. Tanpa guard → formula crash.',
   },
 
-  // Spec:  Fee_Pct = 1.0 (100%) → R_Fee = Final_Total_Price → Total_GPR very negative
+  // Spec:  Fee_Pct = 1.0 (100%) → Fee = Final_Total_Price → Total_GPR very negative
   {
     id: 'TC-F-35', type: 'integration-final',
-    name: 'R_Fee – Fee_Pct=100% (edge case ekstrem, Total_GPR sangat negatif)',
+    name: 'Fee – Fee_Pct=100% (edge case ekstrem, Total_GPR sangat negatif)',
     setup: {
       [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 50, Set_GPR: 0.65 },
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Fee_Pct: 1.0 },
-    assertFields:  ['R_Fee', 'Final_COGS', 'Total_GPR_Pct'],
-    notes: '⚠ R_Fee = 100% × Total → Final_COGS >> Final_Total_Price → Total_GPR_Pct sangat negatif.',
+    additionalFee: { Fee: 1.0 },
+    assertFields:  ['Fee', 'Final_COGS', 'Total_GPR'],
+    notes: '⚠ Fee = 100% × Total → Final_COGS >> Final_Total_Price → Total_GPR sangat negatif.',
   },
 
   // ── LABEL ─────────────────────────────────────────────────────────────────
@@ -155,7 +155,7 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: { Label: 650000 },
-    assertFields:  ['Final_COGS', 'Total_GPR_Pct'],
+    assertFields:  ['Final_COGS', 'Total_GPR'],
     notes: 'Final_COGS += 650.000 dari Label. Label = total biaya label seluruh order (bukan per pcs × qty).',
   },
 
@@ -191,7 +191,7 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: { Shipping_Cost: 1000000 },
-    assertFields:  ['Final_COGS', 'Total_GPR_Pct'],
+    assertFields:  ['Final_COGS', 'Total_GPR'],
     notes: 'Shipping_Cost = Rp 1.000.000 lump sum. Final_COGS += 1.000.000 (bukan ×Qty).',
   },
 
@@ -228,8 +228,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Discount_Pct: 0.02 },
-    assertFields:  ['R_Discount'],
+    additionalFee: { Discount1: 0.02 },
+    assertFields:  ['Discount2'],
     notes: 'R_Discount = 2% × Final_Total_Price = potongan Rp (bukan harga setelah diskon).',
   },
 
@@ -243,17 +243,17 @@ const SCENARIOS = [
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Discount_Pct: 0 },
-    assertFields:  ['R_Discount'],
+    additionalFee: { Discount1: 0 },
+    assertFields:  ['Discount2'],
     notes: 'R_Discount = 0.',
   },
 
   // ── FINAL_COGS & TOTAL_GPR ────────────────────────────────────────────────
 
-  // Spec:  Final_COGS = Σ(COGS rows) + R_Fee + Label + Shipping_Cost
+  // Spec:  Final_COGS = Σ(COGS rows) + Fee + Label + Shipping_Cost
   {
     id: 'TC-F-42', type: 'integration-final',
-    name: 'Final_COGS – semua komponen (COGS_agg + R_Fee + Label + Shipping)',
+    name: 'Final_COGS – semua komponen (COGS_agg + Fee + Label + Shipping)',
     setup: {
       [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.DUVET_COVER,  Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
@@ -268,8 +268,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Fee_Pct: 0.025, Label: 650000, Shipping_Cost: 1000000 },
-    assertFields:  ['R_Fee', 'Final_COGS', 'Total_GPR_Pct'],
+    additionalFee: { Fee: 0.025, Label: 650000, Shipping_Cost: 1000000 },
+    assertFields:  ['Fee', 'Final_COGS', 'Total_GPR'],
     notes: 'Final_COGS = Σ(COGS×Qty) + R.Fee + 650.000 + 1.000.000. Semua komponen terjumlah.',
   },
 
@@ -287,14 +287,14 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: {},
-    assertFields:  ['Final_COGS', 'Total_GPR_Pct'],
-    notes: 'Baseline tanpa biaya tambahan. Final_COGS = Σ(Total_COGS). Total_GPR_Pct = margin Set_GPR.',
+    assertFields:  ['Final_COGS', 'Total_GPR'],
+    notes: 'Baseline tanpa biaya tambahan. Final_COGS = Σ(Total_COGS). Total_GPR = margin Set_GPR.',
   },
 
-  // Spec:  Total_GPR_Pct drops when fees applied
+  // Spec:  Total_GPR drops when fees applied
   {
     id: 'TC-F-44', type: 'integration-final',
-    name: 'Total_GPR_Pct – turun karena Fee + Label + Shipping (< margin Set_GPR)',
+    name: 'Total_GPR – turun karena Fee + Label + Shipping (< margin Set_GPR)',
     setup: {
       [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.FLAT_SHEET, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 131, Set_GPR: 0.65 },
@@ -307,14 +307,14 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: { Fee_Pct: 0.03, Label: 500000, Shipping_Cost: 2000000 },
-    assertFields:  ['Final_COGS', 'Total_GPR_Pct'],
-    notes: 'Total_GPR_Pct turun < 35% karena Final_COGS naik akibat Fee+Label+Shipping.',
+    assertFields:  ['Final_COGS', 'Total_GPR'],
+    notes: 'Total_GPR turun < 35% karena Final_COGS naik akibat Fee+Label+Shipping.',
   },
 
-  // Spec:  Total_GPR_Pct negative when Shipping >> Final_Total_Price
+  // Spec:  Total_GPR negative when Shipping >> Final_Total_Price
   {
     id: 'TC-F-45', type: 'integration-final',
-    name: 'Total_GPR_Pct – negatif (Shipping_Cost >> Final_Total_Price)',
+    name: 'Total_GPR – negatif (Shipping_Cost >> Final_Total_Price)',
     setup: {
       [QUOTED_ITEMS]: [
         { Kode_Bom: PRODUCTS.KING_KOIL.PILLOW_CASE, Tahun_Bulan_yyyy_mm: REAL_DATE, Quantity: 5, Set_GPR: 0.65 },
@@ -322,8 +322,8 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: { Shipping_Cost: 50000000 },
-    assertFields:  ['Final_COGS', 'Total_GPR_Pct'],
-    notes: '⚠ Shipping 50 juta >> Total_Price → Final_COGS >> Total → Total_GPR_Pct sangat negatif.',
+    assertFields:  ['Final_COGS', 'Total_GPR'],
+    notes: '⚠ Shipping 50 juta >> Total_Price → Final_COGS >> Total → Total_GPR sangat negatif.',
   },
 
   // ── FINAL_GRAND_TOTAL ─────────────────────────────────────────────────────
@@ -391,8 +391,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Fee_Pct: 0.025, Discount_Pct: 0.02, Label: 650000, Shipping_Cost: 1000000, Shipping_Cost_Customer: 1500000 },
-    assertFields:  ['Final_Total_Price', 'R_Fee', 'R_Discount', 'Final_COGS', 'Total_GPR_Pct', 'Final_Grand_Total_Rounded'],
+    additionalFee: { Fee: 0.025, Discount1: 0.02, Label: 650000, Shipping_Cost: 1000000, Shipping_Cost_Customer: 1500000 },
+    assertFields:  ['Final_Total_Price', 'Fee', 'Discount2', 'Final_COGS', 'Total_GPR', 'Final_Grand_Total_Rounded'],
     notes: 'Skenario hotel 131 kamar, 10 produk, 2 brand. KK Disc=5%, Serta tanpa diskon. Semua fee input.',
   },
 
@@ -417,8 +417,8 @@ const SCENARIOS = [
       ],
     },
     brandLabels:   LABELS,
-    additionalFee: { Fee_Pct: 0.025, Label: 1200000, Shipping_Cost: 2500000 },
-    assertFields:  ['Final_Total_Price', 'Final_COGS', 'Total_GPR_Pct', 'Final_Grand_Total_Rounded'],
+    additionalFee: { Fee: 0.025, Label: 1200000, Shipping_Cost: 2500000 },
+    assertFields:  ['Final_Total_Price', 'Final_COGS', 'Total_GPR', 'Final_Grand_Total_Rounded'],
     notes: 'Hotel 300 kamar, 10 produk semua pillow/bolster sizes. Uji skala nilai besar.',
   },
 ];
