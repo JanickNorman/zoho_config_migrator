@@ -9,8 +9,8 @@
  *   assertFields  → which Final Grand Total fields to assert
  *
  * Confirmed formulas (v2):
- *   Fee            = Fee × Final_Total_Price
- *   Discount2       = Discount1 × Final_Total_Price   [amount in Rp, not after-disc price]
+ *   Fees            = Fee × Final_Total_Price
+ *   Discounts       = Discount1 × Final_Total_Price   [amount in Rp, not after-disc price]
  *   Final_COGS       = Σ(Total_COGS rows) + Fee + Label + Shipping_Cost
  *   Final_Total_Price= Σ(Total_Price_N all subforms)
  *   Final_PPN_11     = 0.11 × Final_Total_Price
@@ -106,7 +106,7 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: { Fee: 0 },
-    assertFields:  ['Fee', 'Final_COGS'],
+    assertFields:  ['Fee1', 'Final_COGS'],
     notes: 'Fee = 0. Final_COGS = Σ(Total_COGS) saja.',
   },
 
@@ -121,7 +121,7 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: {},
-    assertFields:  ['Fee'],
+    assertFields:  ['Fee1'],
     notes: '⚠ IsEmpty guard: null Fee_Pct → 0. Tanpa guard → formula crash.',
   },
 
@@ -136,7 +136,7 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: { Fee: 1.0 },
-    assertFields:  ['Fee', 'Final_COGS', 'Total_GPR'],
+    assertFields:  ['Fee1', 'Final_COGS', 'Total_GPR'],
     notes: '⚠ Fee = 100% × Total → Final_COGS >> Final_Total_Price → Total_GPR sangat negatif.',
   },
 
@@ -269,7 +269,7 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: { Fee: 0.025, Label: 650000, Shipping_Cost: 1000000 },
-    assertFields:  ['Fee', 'Final_COGS', 'Total_GPR'],
+    assertFields:  ['Fee1', 'Final_COGS', 'Total_GPR'],
     notes: 'Final_COGS = Σ(COGS×Qty) + R.Fee + 650.000 + 1.000.000. Semua komponen terjumlah.',
   },
 
@@ -392,7 +392,7 @@ const SCENARIOS = [
     },
     brandLabels:   LABELS,
     additionalFee: { Fee: 0.025, Discount1: 0.02, Label: 650000, Shipping_Cost: 1000000, Shipping_Cost_Customer: 1500000 },
-    assertFields:  ['Final_Total_Price', 'Fee', 'Discount2', 'Final_COGS', 'Total_GPR', 'Final_Grand_Total_Rounded'],
+    assertFields:  ['Final_Total_Price', 'Fee1', 'Discount2', 'Final_COGS', 'Total_GPR', 'Final_Grand_Total_Rounded'],
     notes: 'Skenario hotel 131 kamar, 10 produk, 2 brand. KK Disc=5%, Serta tanpa diskon. Semua fee input.',
   },
 
