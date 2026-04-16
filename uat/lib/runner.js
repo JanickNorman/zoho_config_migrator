@@ -4,6 +4,7 @@ const fs = require('fs/promises');
 
 const { CONFIG, CLI_MODE }         = require('./config');
 const { C, log, sleep, fmt }       = require('./logger');
+const { processQuoteDAP }          = require('../../dap/processQuote');
 const { pollUntilIntegrated }      = require('./poll');
 const { verify, verifyFields,
         printAssertions }          = require('./assert');
@@ -243,12 +244,17 @@ async function runScenario(scenario, api, multiApi) {
     result.quoteId = created.id;
     log.info(`Quote created. ID: ${created.id}`);
 
-    // ── Step 2: Poll until all subform rows have COGS + MUF ───────────────
-    log.info(`Step 2: Polling all subforms (max ${CONFIG.integrationWaitMs/1000}s)...`);
+    // ── Step 2: Simulate Zoho automation (processQuoteDAP) ────────────────
+    log.info('Step 2: Running processQuoteDAP to simulate Zoho automation...');
+    await processQuoteDAP(created.id, { log: false });
+    log.info('processQuoteDAP complete.');
+
+    // ── Step 3: Poll until all subform rows have COGS + MUF ───────────────
+    log.info(`Step 3: Polling all subforms (max ${CONFIG.integrationWaitMs/1000}s)...`);
     const rowsBySubform = await multiApi.pollAllSubformsIntegrated(created.id, subformNames);
     multiApi.logIntegrationValues(rowsBySubform, brandLabels);
 
-    // ── Step 3 (twoStep flag): PATCH Corp.Price = actual Price on first row ─
+    // ── Step 4 (twoStep flag): PATCH Corp.Price = actual Price on first row ─
     let twoStepOverrides = {};
     if (scenario.twoStep) {
       const sfName    = subformNames[0];
@@ -257,7 +263,7 @@ async function runScenario(scenario, api, multiApi) {
         result.status = 'ERROR'; result.error = 'Row id missing for two-step PATCH'; return result;
       }
       const actualPrice = Math.round((Number(actualRow.COGS) / 0.65) * 100) / 100;
-      log.info(`Step 3 (two-step): PATCHing ${sfName}[0].Corporate_Price = ${fmt(actualPrice)}...`);
+      log.info(`Step 4 (two-step): PATCHing ${sfName}[0].Corporate_Price = ${fmt(actualPrice)}...`);
       await patchSubformRow(created.id, actualRow.id, { Corporate_Price: actualPrice });
       await sleep(CONFIG.formulaWaitMs);
 
@@ -271,7 +277,7 @@ async function runScenario(scenario, api, multiApi) {
     // ── Step 4 (integration-final): wait for Final Grand Total formulas ────
     let quoteFieldsForFinal = null;
     if (type === 'integration-final') {
-      log.info(`Step 4 (final): Waiting ${CONFIG.headerFormulaWaitMs}ms for Final Grand Total...`);
+      log.info(`Step 5 (final): Waiting ${CONFIG.headerFormulaWaitMs}ms for Final Grand Total...`);
       await sleep(CONFIG.headerFormulaWaitMs);
       const refetched = await getQuote(created.id);
       if (refetched.httpStatus !== 200) { result.status = 'ERROR'; result.error = `Final re-fetch HTTP ${refetched.httpStatus}`; return result; }
@@ -279,7 +285,7 @@ async function runScenario(scenario, api, multiApi) {
       log.info(`Final_Total_Price: ${fmt(quoteFieldsForFinal.Final_Total_Price)}`);
     }
 
-    // ── Step 5: Assert ─────────────────────────────────────────────────────
+    // ── Step 6: Assert ─────────────────────────────────────────────────────
     log.info('Asserting formula fields...');
     const allAssertions = [];
 
