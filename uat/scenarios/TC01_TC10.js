@@ -66,12 +66,11 @@ const SCENARIOS = [
       const kkExp    = expected[QUOTED_ITEMS][0];
       const srActual = actual[QUOTED_ITEMS_2][0];
       const srExp    = expected[QUOTED_ITEMS_2][0];
-      console.log(JSON.stringify(actual, null, 2));
 
-      output.assert('KK  Price',  kkActual.Price, kkExp.Price);
-      output.assert('KK  GPR_1',  kkActual.GPR_1, kkExp.GPR_1);
-      output.assert('Serta Price', srActual.Price, srExp.Price);
-      output.assert('Serta GPR',   srActual.GPR,   srExp.GPR);
+      output.assert('Subform 1 - Price',  kkActual.Price, kkExp.Price);
+      output.assert('Subform 1 - GPR',  kkActual.GPR_1, kkExp.GPR_1);
+      output.assert('Subform 2 - Price', srActual.Price, srExp.Price);
+      output.assert('Subform 2 - GPR',   srActual.GPR,   srExp.GPR);
     },
     notes: 'Set_GPR=0.60 → Price=COGS/0.60. GPR_1 di QUOTED_ITEMS, GPR di QUOTED_ITEMS_2. ~40% per baris.',
   },

@@ -219,8 +219,8 @@ async function runScenario(scenario, api, multiApi) {
 
     // Log the fixture (condition for this formula test)
     log.info('Condition (quote fixture):');
-    subformNames.forEach(sfName => {
-      const label = brandLabels[sfName] || sfName;
+    subformNames.forEach((sfName, sfIdx) => {
+      const label = `Subform ${sfIdx + 1}`;
       log.info(`  ${label}: ${setup[sfName].length} row(s)`);
       setup[sfName].forEach((r, i) =>
         log.info(`    Row ${i+1}: Kode_Bom=${r.Kode_Bom}  Qty=${r.Quantity}`
@@ -356,15 +356,18 @@ async function runScenario(scenario, api, multiApi) {
             pass ? log.pass(line) : log.fail(line);
             customAssertions.push(a);
           },
+          result() {
+            return customAssertions.every(a => a.pass);
+          },
         };
         scenario.assert(actualBySubform, expectedBySubform, output);
         allAssertions.push(...customAssertions);
 
       } else {
         // ── Standard assertFields path ────────────────────────────────────
-        for (const sfName of subformNames) {
+        for (const [sfIdx, sfName] of subformNames.entries()) {
           const sfRows   = actualBySubform[sfName];
-          const label    = brandLabels[sfName] || sfName;
+          const label    = `Subform ${sfIdx + 1}`;
           log.info(`\n  ${label}:`);
 
           sfRows.forEach((actualRow, idx) => {

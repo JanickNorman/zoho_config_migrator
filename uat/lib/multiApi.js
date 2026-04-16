@@ -83,8 +83,10 @@ function createMultiApi(CONFIG, log, api) {
    * @param {object} brandLabels   - map of subformName → human-readable brand name (optional)
    */
   function logIntegrationValues(rowsBySubform, brandLabels = {}) {
-    for (const [sfName, rows] of Object.entries(rowsBySubform)) {
-      const label = brandLabels[sfName] || sfName;
+    const sfNames = Object.keys(rowsBySubform);
+    for (const [sfIdx, sfName] of sfNames.entries()) {
+      const rows  = rowsBySubform[sfName];
+      const label = `Subform ${sfIdx + 1}`;
       log.info(`${label} (${sfName}) — ${rows.length} row(s):`);
       rows.forEach((row, i) => {
         const fields = ['COGS', 'MUF', 'KODE_KAIN']
