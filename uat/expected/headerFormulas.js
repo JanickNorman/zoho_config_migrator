@@ -80,8 +80,8 @@ function computeSubformAggregate(rowResults) {
  * @returns {object} all final grand total expected values + internal metadata (_prefixed)
  */
 function computeFinalGrandTotal(allRows, additionalFee = {}) {
-  const feePct      = Number(additionalFee.Fee_Pct)            || 0;
-  const discPct     = Number(additionalFee.Discount_Pct)       || 0;
+  const feePct      = Number(additionalFee.Fee)            || 0;
+  const discPct     = Number(additionalFee.Discount1)       || 0;
   const label       = Number(additionalFee.Label)              || 0;
   const shipCost    = Number(additionalFee.Shipping_Cost)      || 0;
   // Shipping_Cost_Cust goes to PDF only — not computed here
@@ -108,11 +108,11 @@ function computeFinalGrandTotal(allRows, additionalFee = {}) {
     Final_PPN_11:               finalPPN,
     Final_Grand_Total:          finalGT,
     Final_Grand_Total_Rounded:  finalGTRounded,
-    R_Fee:                      rFee,
-    R_Discount:                 rDiscount,
+    Fee1:                      rFee,
+    Discount2:                 rDiscount,
     Final_COGS:                 finalCOGS,
     Final_Total_Net_Income:     finalNetIncome,
-    Total_GPR_Pct:              totalGPR,
+    Total_GPR:              totalGPR,
     // Internal metadata (skipped by assert.js)
     _feePct:         feePct,
     _discPct:        discPct,
