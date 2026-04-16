@@ -15,6 +15,17 @@ const SUBFORM_NAMES = [
   'Quoted_Items_5',
 ];
 
+// Configurable logger: enable verbose logs with `DAP_VERBOSE=1` or `DEBUG=1`
+const LOG_ENABLED = process.env.DAP_VERBOSE === '1' || process.env.DEBUG === '1';
+
+const logger = {
+  log: (...args) => { if (LOG_ENABLED) console.log(...args); },
+  info: (...args) => { if (LOG_ENABLED) console.info(...args); },
+  warn: (...args) => { if (LOG_ENABLED) console.warn(...args); },
+  error: (...args) => console.error(...args),
+  debug: (...args) => { if (LOG_ENABLED) (console.debug ? console.debug(...args) : console.log(...args)); },
+};
+
 // ─── Zoho helpers ────────────────────────────────────────────────────────────
 
 async function getZohoAccessToken() {
@@ -25,7 +36,7 @@ async function getZohoAccessToken() {
     return credentials.access_token;
   }
 
-  console.log('Refreshing Zoho access token...');
+  logger.log('Refreshing Zoho access token...');
   const params = new URLSearchParams({
     client_id: credentials.client_id,
     client_secret: credentials.client_secret,
@@ -82,7 +93,7 @@ async function lookupByBom(bomCode, headers) {
       { bom_code: bomCode },
       { headers }
     );
-    console.log(`  BOM lookup [${bomCode}]:`, response.data?.status);
+    logger.log(`  BOM lookup [${bomCode}]:`, response.data?.status);
     if (response.data?.status === 'success') {
       return response.data.data || [];
     }
@@ -99,7 +110,7 @@ async function fetchBomDetail(detailId, codeYear, codeMonth, headers) {
       { code_year: codeYear, code_month: codeMonth },
       { headers }
     );
-    console.log(`  BOM detail [${detailId}]:`, response.data?.status);
+    logger.log(`  BOM detail [${detailId}]:`, response.data?.status);
     if (response.data?.status === 'success') {
       return response.data.data || null;
     }
@@ -135,25 +146,25 @@ async function processRow(row, dapHeaders) {
   }
 
   const { codeYear, codeMonth } = parsePeriod((row.Code_Period || '').toString().trim());
-  console.log(`  Row ${row.id} — Kode_Bom: ${kodeBom} | Period: ${codeYear}-${codeMonth}`);
+  logger.log(`  Row ${row.id} — Kode_Bom: ${kodeBom} | Period: ${codeYear}-${codeMonth}`);
 
   // 1) BOM list lookup to get detail_id
   const bomResults = await lookupByBom(kodeBom, dapHeaders);
   if (!bomResults.length) {
-    console.warn(`  No BOM results for ${kodeBom}`);
+    logger.warn(`  No BOM results for ${kodeBom}`);
     return { rowMap, foundData: false };
   }
 
   const detailId = (bomResults[0].detail_id || '').toString();
   if (!detailId) {
-    console.warn(`  No detail_id for BOM ${kodeBom}`);
+    logger.warn(`  No detail_id for BOM ${kodeBom}`);
     return { rowMap, foundData: false };
   }
 
   // 2) BOM detail to get COGS, MUF, Kode Kain
   const data = await fetchBomDetail(detailId, codeYear, codeMonth, dapHeaders);
   if (!data) {
-    console.warn(`  No detail data for detail_id ${detailId}`);
+    logger.warn(`  No detail data for detail_id ${detailId}`);
     return { rowMap, foundData: false };
   }
 
@@ -163,7 +174,7 @@ async function processRow(row, dapHeaders) {
   // COGS from calculate.costing (integer — no decimal places allowed)
   if (calcMap.costing != null) {
     rowMap.COGS = Math.round(parseFloat(calcMap.costing));
-    console.log(`    COGS: ${rowMap.COGS}`);
+    logger.log(`    COGS: ${rowMap.COGS}`);
   }
 
   if (detailArr.length > 0) {
@@ -172,14 +183,14 @@ async function processRow(row, dapHeaders) {
     // MUF from detail[0].jumlah
     if (firstDetail.jumlah != null) {
       rowMap.MUF = parseFloat(firstDetail.jumlah);
-      console.log(`    MUF: ${rowMap.MUF}`);
+      logger.log(`    MUF: ${rowMap.MUF}`);
     }
 
     // Kode Kain from detail[0].item_code
     const kodeKain = (firstDetail.item_code || '').toString().trim();
     if (kodeKain) {
       rowMap.KODE_KAIN = kodeKain;
-      console.log(`    KODE_KAIN: ${kodeKain}`);
+      logger.log(`    KODE_KAIN: ${kodeKain}`);
     }
   }
 
@@ -189,8 +200,8 @@ async function processRow(row, dapHeaders) {
 // ─── Main function ────────────────────────────────────────────────────────────
 
 async function processQuoteDAP(recordId) {
-  console.log('=== FUNCTION START ===');
-  console.log('RECORD ID:', recordId);
+  logger.log('=== FUNCTION START ===');
+  logger.log('RECORD ID:', recordId);
 
   const zohoToken = await getZohoAccessToken();
 
@@ -227,7 +238,7 @@ async function processQuoteDAP(recordId) {
     const subformList = record[subformName];
     if (!subformList || subformList.length === 0) continue;
 
-    console.log(`\nProcessing subform: ${subformName} (${subformList.length} rows)`);
+    logger.log(`\nProcessing subform: ${subformName} (${subformList.length} rows)`);
     const updatedItems = [];
 
     for (const row of subformList) {
@@ -240,13 +251,13 @@ async function processQuoteDAP(recordId) {
   }
 
   // Push updates back to Zoho
-  console.log('\nFINAL UPDATE BODY:', JSON.stringify({ data: [updateMap] }, null, 2));
+  logger.log('\nFINAL UPDATE BODY:', JSON.stringify({ data: [updateMap] }, null, 2));
   const updateResponse = await axios.put(
     `https://www.zohoapis.com/crm/v2.1/Quotes/${recordId}`,
     { data: [updateMap] },
     { headers: { Authorization: `Zoho-oauthtoken ${zohoToken}`, 'Content-Type': 'application/json' } }
   );
-  console.log('UPDATE RESPONSE:', JSON.stringify(updateResponse.data, null, 2));
+  logger.log('UPDATE RESPONSE:', JSON.stringify(updateResponse.data, null, 2));
 
   // Check update response for success
   const firstResp = updateResponse.data?.data?.[0];
@@ -258,7 +269,7 @@ async function processQuoteDAP(recordId) {
     Refresh_Flag: true,
   });
 
-  console.log('=== FUNCTION END ===');
+  logger.log('=== FUNCTION END ===');
 }
 
 
